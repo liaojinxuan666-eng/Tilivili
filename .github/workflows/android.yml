@@ -20,12 +20,11 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+        with:
+          gradle-version: 8.9 # 指定版本，不需要 wrapper 文件
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: gradle assembleDebug # 直接用 gradle，不用 ./gradlew
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
