@@ -15,9 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,9 +44,9 @@ fun HomeScreen() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Tilivili",
+            text = "Tilivili 已就绪",
             color = Color.White,
-            fontSize = 64.sp,
+            fontSize = 48.sp,
             fontWeight = FontWeight.Bold
         )
     }
