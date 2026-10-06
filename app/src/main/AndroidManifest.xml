@@ -1,17 +1,46 @@
-<application
-    android:allowBackup="true"
-    android:banner="@drawable/tv_banner"
-    android:icon="@drawable/ic_launcher"
-    android:label="@string/app_name"
-    android:supportsRtl="true"
-    android:theme="@style/Theme.Tilivili"  <!-- 保持引用，但在 themes.xml 里改掉继承 -->
-    android:usesCleartextTraffic="true">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <activity
-        android:name=".MainActivity"
-        android:exported="true"
-        android:launchMode="singleTask"
-        android:screenOrientation="landscape"
-        android:theme="@style/Theme.Tilivili" <!-- 加在这里更保险 -->
-        android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode">
-        ...
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="true"
+        tools:replace="android:required" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false"
+        tools:replace="android:required" />
+
+    <application
+        android:allowBackup="true"
+        android:banner="@drawable/tv_banner"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Tilivili"
+        android:usesCleartextTraffic="true"
+        tools:replace="android:theme, android:label, android:icon, android:allowBackup, android:supportsRtl">
+
+        <!-- 
+          注意：如果你已经删除了 TiliviliApp.kt 文件，
+          请务必把下面这行的 android:name=".TiliviliApp" 删掉！
+          否则安装后打开必闪退。
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>
