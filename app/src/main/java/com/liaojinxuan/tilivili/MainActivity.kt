@@ -45,7 +45,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // 注意：这里的签名已经更新为三个参数，与 Rust 端保持一致
     external fun helloRust(): String
     external fun wbiSign(imgKey: String, subKey: String, rawQuery: String): String
 
@@ -65,9 +64,7 @@ fun TVApp() {
     val tabs = listOf("首页", "搜索", "动态", "设置")
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF0F0F0F))
+        modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F))
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
             // 左侧导航栏
@@ -104,10 +101,7 @@ fun TVApp() {
 
             // 右侧内容区
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(24.dp),
+                modifier = Modifier.weight(1f).fillMaxHeight().padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 when (currentTab) {
@@ -135,7 +129,7 @@ fun HomeScreen() {
                 VideoRepository.getHomeVideos(context)
             }
             if (videos.isEmpty()) {
-                errorMsg = "获取数据失败（可能需要 Cookie 或 Wbi 签名）"
+                errorMsg = "获取数据失败（请到设置页检查网络或 Cookie）"
             }
         } catch (e: Exception) {
             errorMsg = "请求异常: ${e.message}"
@@ -162,18 +156,13 @@ fun HomeScreen() {
 
 @Composable
 fun VideoCard(video: VideoItem) {
-    Column(
-        modifier = Modifier
-            .width(240.dp)
-            .padding(8.dp)
-    ) {
+    Column(modifier = Modifier.width(240.dp).padding(8.dp)) {
         AsyncImage(
-            model = video.pic.replace("http://", "https://"), // 👈 确认这里是 model，不是 modelp
+            model = video.pic.replace("http://", "https://"),
             contentDescription = video.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(135.dp)
+                .fillMaxWidth().height(135.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFF2A2A2A))
         )
@@ -186,11 +175,7 @@ fun VideoCard(video: VideoItem) {
             overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = video.owner.name,
-            color = Color.Gray,
-            fontSize = 12.sp
-        )
+        Text(text = video.owner.name, color = Color.Gray, fontSize = 12.sp)
     }
 }
 
@@ -215,11 +200,7 @@ fun SettingsScreen() {
 
     DisposableEffect(Unit) {
         onDispose {
-            try {
-                server.stop()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            try { server.stop() } catch (e: Exception) { e.printStackTrace() }
         }
     }
 
@@ -238,7 +219,6 @@ fun SettingsScreen() {
     }
 }
 
-// 获取局域网 IP 地址
 fun getLocalIpAddress(): String {
     try {
         val en = NetworkInterface.getNetworkInterfaces()
@@ -255,8 +235,6 @@ fun getLocalIpAddress(): String {
                 }
             }
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
+    } catch (e: Exception) { e.printStackTrace() }
     return "127.0.0.1"
 }
