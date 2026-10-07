@@ -5,12 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Button
@@ -18,12 +23,14 @@ import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
+import coil.compose.AsyncImage
+import com.liaojinxuan.tilivili.data.model.VideoItem
+import com.liaojinxuan.tilivili.data.repository.VideoRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     companion object {
-        // 将加载放在伴生对象中，但用 try-catch 保护，防止闪退
         init {
             try {
                 System.loadLibrary("tilivili_rust")
@@ -38,31 +45,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                // 使用 LaunchedEffect 在协程中异步获取 Rust 签名
-                var rustSign by remember { mutableStateOf("正在计算 Rust 签名...") }
-                
-                LaunchedEffect(Unit) {
-                    rustSign = withContext(Dispatchers.IO) {
-                        try {
-                            // 在 IO 线程里调用 JNI，绝不阻塞主线程
-                            wbiSign("foo=114&bar=514")
-                        } catch (e: Exception) {
-                            "Rust 签名失败: ${e.message}"
-                        }
-                    }
-                }
-                
-                TVApp(rustSign)
+                TVApp()
             }
         }
     }
 }
 
 @Composable
-fun TVApp(rustSign: String) {
+fun TVApp() {
     var currentTab by remember { mutableStateOf(0) }
     val tabs = listOf("首页", "搜索", "动态", "设置")
 
@@ -112,13 +104,80 @@ fun TVApp(rustSign: String) {
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Rust Wbi 签名结果:\n\n$rustSign",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Center
-                )
+                when (currentTab) {
+                    0 -> HomeScreen()
+                    1 -> Text("这里是搜索页面", color = Color.White, fontSize = 32.sp)
+                    2 -> Text("这里是动态页面", color = Color.White, fontSize = 32.sp)
+                    3 -> Text("这里是设置页面", color = Color.White, fontSize = 32.sp)
+                }
             }
         }
+    }
+}
+
+@Composable
+fun HomeScreen() {
+    var videos by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        videos = withContext(Dispatchers.IO) {
+            VideoRepository.getHomeVideos()
+        }
+        isLoading = false
+    }
+
+    if (isLoading) {
+        Text("正在加载首页数据...", color = Color.White, fontSize = 24.sp)
+    } else if (videos.isEmpty()) {
+        Text("获取数据失败（可能需要 Wbi 签名或 Cookie）", color = Color.Gray, fontSize = 18.sp)
+    } else {
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(videos) { video ->
+                VideoCard(video)
+            }
+        }
+    }
+}
+
+@Composable
+fun VideoCard(video: VideoItem) {
+    Column(
+        modifier = Modifier
+            .width(240.dp)
+            .padding(8.dp)
+    ) {
+        // 封面图
+        AsyncImage(
+            model = video.pic.replace("http://", "https://"),
+            contentDescription = video.title,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(135.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF2A2A2A))
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        // 标题
+        Text(
+            text = video.title,
+            color = Color.White,
+            fontSize = 14.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        // UP主
+        Text(
+            text = video.owner.name,
+            color = Color.Gray,
+            fontSize = 12.sp
+        )
     }
 }
