@@ -51,9 +51,10 @@ interface BiliApi {
         @Query("type") type: String = "all"
     ): VideoRecommendResponse
 
-    @GET("x/passport-login/web/qrcode/generate")
+    // 注意这里：使用了完整的 passport.bilibili.com 域名
+    @GET("https://passport.bilibili.com/x/passport-login/web/qrcode/generate")
     suspend fun getQrCode(): QrGenerateResponse
 
-    @GET("x/passport-login/web/qrcode/poll")
+    @GET("https://passport.bilibili.com/x/passport-login/web/qrcode/poll")
     suspend fun pollQrCode(@Query("qrcode_key") key: String): retrofit2.Response<QrPollResponse>
 }
