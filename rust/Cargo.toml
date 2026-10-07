@@ -8,5 +8,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 jni = "0.21.1"
-md5 = "0.7.0"
+md5 = "0.10.6"    # 👈 改成这个版本
 hex = "0.4.3"
