@@ -1,8 +1,10 @@
 package com.liaojinxuan.tilivili
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -25,11 +28,16 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
 import coil.compose.AsyncImage
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.MultiFormatWriter
 import com.liaojinxuan.tilivili.data.model.VideoItem
 import com.liaojinxuan.tilivili.data.network.CookieWebServer
+import com.liaojinxuan.tilivili.data.repository.QrRepository
 import com.liaojinxuan.tilivili.data.repository.VideoRepository
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -67,7 +75,6 @@ fun TVApp() {
         modifier = Modifier.fillMaxSize().background(Color(0xFF0F0F0F))
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
-            // 左侧导航栏
             Column(
                 modifier = Modifier
                     .width(200.dp)
@@ -99,7 +106,6 @@ fun TVApp() {
                 }
             }
 
-            // 右侧内容区
             Box(
                 modifier = Modifier.weight(1f).fillMaxHeight().padding(24.dp),
                 contentAlignment = Alignment.Center
@@ -129,7 +135,7 @@ fun HomeScreen() {
                 VideoRepository.getHomeVideos(context)
             }
             if (videos.isEmpty()) {
-                errorMsg = "获取数据失败（请到设置页检查网络或 Cookie）"
+                errorMsg = "获取数据失败（请到设置页扫码或登录）"
             }
         } catch (e: Exception) {
             errorMsg = "请求异常: ${e.message}"
@@ -186,21 +192,57 @@ fun SettingsScreen() {
     var serverMsg by remember { mutableStateOf("等待连接...") }
     val server = remember { CookieWebServer(context.applicationContext, 8080) }
 
+    var showQrCode by remember { mutableStateOf(false) }
+    var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var qrStatusMsg by remember { mutableStateOf("请使用 B站 App 扫码") }
+    var qrcodeKey by remember { mutableStateOf("") }
+    var isLoggedIn by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             ipAddress = getLocalIpAddress()
             try {
                 server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
-                serverMsg = "服务器已启动，请访问上述地址"
+                serverMsg = "服务器已启动"
             } catch (e: Exception) {
                 serverMsg = "服务器启动失败: ${e.message}"
             }
         }
     }
-
     DisposableEffect(Unit) {
-        onDispose {
-            try { server.stop() } catch (e: Exception) { e.printStackTrace() }
+        onDispose { try { server.stop() } catch (e: Exception) { e.printStackTrace() } }
+    }
+
+    LaunchedEffect(showQrCode) {
+        if (showQrCode) {
+            val url = withContext(Dispatchers.IO) { QrRepository.getQrCodeUrl(context) }
+            if (url != null) {
+                qrBitmap = generateQrCodeBitmap(url, 400)
+                qrcodeKey = url.substringAfterLast("qrcode_key=").substringBefore("&")
+
+                while (true) {
+                    delay(2000)
+                    val pollData = withContext(Dispatchers.IO) { QrRepository.pollStatus(context, qrcodeKey) }
+                    if (pollData != null) {
+                        when (pollData.code) {
+                            0 -> {
+                                qrStatusMsg = "登录成功！"
+                                isLoggedIn = true
+                                delay(1500)
+                                showQrCode = false
+                                break
+                            }
+                            86090 -> qrStatusMsg = "已扫码，请在手机上确认"
+                            86038 -> {
+                                qrStatusMsg = "二维码已过期，请刷新"
+                                break
+                            }
+                        }
+                    }
+                }
+            } else {
+                qrStatusMsg = "获取二维码失败"
+            }
         }
     }
 
@@ -209,14 +251,54 @@ fun SettingsScreen() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("请在手机浏览器中访问以下地址，输入 Cookie：", color = Color.White, fontSize = 24.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("http://$ipAddress:8080", color = Color(0xFFFB7299), fontSize = 36.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(serverMsg, color = Color.Gray, fontSize = 16.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("请确保手机和电视连接在同一 WiFi 下", color = Color.Gray, fontSize = 16.sp)
+        if (!showQrCode) {
+            Text("请选择登录方式：", color = Color.White, fontSize = 24.sp)
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = { showQrCode = true; isLoggedIn = false },
+                colors = ButtonDefaults.colors(containerColor = Color(0xFFFB7299)),
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Text("B站扫码登录", fontSize = 20.sp)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("或使用手机浏览器访问：", color = Color.Gray, fontSize = 16.sp)
+            Text("http://$ipAddress:8080", color = Color(0xFFFB7299), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        } else {
+            Text(qrStatusMsg, color = Color.White, fontSize = 24.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            qrBitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "QR Code",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(300.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { showQrCode = false },
+                colors = ButtonDefaults.colors(containerColor = Color(0xFF2A2A2A))
+            ) {
+                Text("取消")
+            }
+        }
     }
+}
+
+fun generateQrCodeBitmap(content: String, size: Int): Bitmap {
+    val hints = mapOf(
+        EncodeHintType.CHARACTER_SET to "UTF-8",
+        EncodeHintType.MARGIN to 1
+    )
+    val bitMatrix = MultiFormatWriter().encode(content, BarcodeFormat.QR_CODE, size, size, hints)
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    for (x in 0 until size) {
+        for (y in 0 until size) {
+            bitmap.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        }
+    }
+    return bitmap
 }
 
 fun getLocalIpAddress(): String {
