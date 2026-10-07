@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization) // 👈 必须有这一行，不然网络库会报错
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -25,14 +25,12 @@ android {
             isMinifyEnabled = false
         }
         release {
-            // 开启 R8 代码裁剪和资源收缩，能大幅提升流畅度和减少包体积
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 用默认的 debug 签名，保证能正常安装，后续可以换成自己的 keystore
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -66,7 +64,6 @@ dependencies {
     implementation(libs.androidx.media3.datasource.okhttp)
 
     // 网络
-    // 轻量级 HTTP 服务器，用于接收手机推送的 Cookie
     implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation(libs.retrofit)
     implementation(libs.retrofit.serialization)
@@ -74,13 +71,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
 
-    // 图片
+    // 图片 & 扫码
     implementation(libs.coil.compose)
-    // 扫码登录：获取二维码
-    @GET("x/passport-login/web/qrcode/generate")
-    suspend fun getQrCode(): QrGenerateResponse
-
-    // 扫码登录：轮询扫码状态
-    @GET("x/passport-login/web/qrcode/poll")
-    suspend fun pollQrCode(@Query("qrcode_key") key: String): retrofit2.Response<QrPollResponse>
+    implementation(libs.zxing.core)
 }
