@@ -59,6 +59,8 @@ dependencies {
     implementation(libs.androidx.media3.datasource.okhttp)
 
     // 网络
+    // 轻量级 HTTP 服务器，用于接收手机推送的 Cookie
+    implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation(libs.retrofit)
     implementation(libs.retrofit.serialization)
     implementation(libs.okhttp)
