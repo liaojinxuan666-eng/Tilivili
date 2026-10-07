@@ -123,17 +123,20 @@ fun TVApp() {
 
 @Composable
 fun HomeScreen() {
-    val context = LocalContext.current.applicationContext
+    val context = LocalContext.current
     var videos by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         isLoading = true
         videos = withContext(Dispatchers.IO) {
+            // 传入 Activity 的 Context，这样我们才能调用 Rust 的 JNI 方法
             VideoRepository.getHomeVideos(context)
         }
         isLoading = false
     }
+    // ... 后面的 UI 保持不变
+}
 
     if (isLoading) {
         Text("正在加载首页数据...", color = Color.White, fontSize = 24.sp)
