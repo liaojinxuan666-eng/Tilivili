@@ -13,7 +13,8 @@ import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "https://app.bilibili.com/"
+    // 改成 web 端域名，接口更丰富，不需要强制登录
+    private const val BASE_URL = "https://api.bilibili.com/"
     private val json = Json { ignoreUnknownKeys = true }
 
     fun getApi(context: Context): BiliApi {
@@ -41,7 +42,6 @@ object RetrofitClient {
 
             val requestBuilder = original.newBuilder()
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                // 补充 Passport 接口必需的 Referer 和 Origin
                 .header("Referer", "https://www.bilibili.com/")
                 .header("Origin", "https://www.bilibili.com")
 
