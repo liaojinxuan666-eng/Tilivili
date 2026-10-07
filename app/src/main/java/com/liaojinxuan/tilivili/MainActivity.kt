@@ -28,6 +28,7 @@ import com.liaojinxuan.tilivili.data.model.VideoItem
 import com.liaojinxuan.tilivili.data.repository.VideoRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -117,13 +118,14 @@ fun TVApp() {
 
 @Composable
 fun HomeScreen() {
+    val context = LocalContext.current.applicationContext
     var videos by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         isLoading = true
         videos = withContext(Dispatchers.IO) {
-            VideoRepository.getHomeVideos()
+            VideoRepository.getHomeVideos(context) // 👈 传入 context
         }
         isLoading = false
     }
