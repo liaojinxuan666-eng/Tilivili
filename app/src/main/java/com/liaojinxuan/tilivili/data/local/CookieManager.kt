@@ -11,14 +11,21 @@ val Context.dataStore by preferencesDataStore(name = "tilivili_settings")
 object CookieManager {
     private val COOKIE_KEY = stringPreferencesKey("bili_cookie")
 
-    // 保存 Cookie
     suspend fun saveCookie(context: Context, cookie: String) {
-        context.dataStore.edit { it[COOKIE_KEY] = cookie }
+        try {
+            context.dataStore.edit { it[COOKIE_KEY] = cookie }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
-    // 读取 Cookie
     suspend fun getCookie(context: Context): String {
-        val prefs = context.dataStore.data.first()
-        return prefs[COOKIE_KEY] ?: ""
+        return try {
+            val prefs = context.dataStore.data.first()
+            prefs[COOKIE_KEY] ?: ""
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
+        }
     }
 }
