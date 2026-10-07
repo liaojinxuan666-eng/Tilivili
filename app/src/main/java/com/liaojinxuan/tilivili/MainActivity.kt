@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
     }
 
     external fun helloRust(): String
-    external fun wbiSign(rawQuery: String): String
+    external fun wbiSign(imgKey: String, subKey: String, rawQuery: String): String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
