@@ -21,10 +21,34 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 8.9 # 指定版本，不需要 wrapper 文件
+          gradle-version: 8.9
+
+      # ===================== 新增 Rust 环境 =====================
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26b
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: Build Rust Library
+        working-directory: ./rust
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          cargo ndk -t arm64-v8a -o ../app/src/main/jniLibs build --release
+          cargo ndk -t armeabi-v7a -o ../app/src/main/jniLibs build --release
+      # ========================================================
 
       - name: Build Debug APK
-        run: gradle assembleDebug # 直接用 gradle，不用 ./gradlew
+        run: gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
