@@ -21,11 +21,18 @@ android {
     }
 
     buildTypes {
-        debug { isMinifyEnabled = false }
+        debug {
+            isMinifyEnabled = false
+        }
         release {
+            // 开启 R8 代码裁剪和资源收缩，能大幅提升流畅度和减少包体积
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // 用默认的 debug 签名，保证能正常安装，后续可以换成自己的 keystore
             signingConfig = signingConfigs.getByName("debug")
         }
     }
