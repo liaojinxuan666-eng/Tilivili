@@ -168,12 +168,12 @@ fun VideoCard(video: VideoItem) {
             .padding(8.dp)
     ) {
         AsyncImage(
-            modelp = video.pic.replace("http://", "https://"),
+            model = video.pic.replace("http://", "https://"), // 👈 确认这里是 model，不是 modelp
             contentDescription = video.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(135.d)
+                .height(135.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFF2A2A2A))
         )
