@@ -1,7 +1,6 @@
 <resources>
     <style name="Theme.Tilivili" parent="android:Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@android:color/black</item>
-        <!-- 关闭窗口预览动画，提升启动速度 -->
-        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowDisablePreview">true</item> <!-- 提升启动速度 -->
     </style>
 </resources>
