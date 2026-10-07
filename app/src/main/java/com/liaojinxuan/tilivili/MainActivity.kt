@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -25,10 +27,13 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
 import coil.compose.AsyncImage
 import com.liaojinxuan.tilivili.data.model.VideoItem
+import com.liaojinxuan.tilivili.data.network.CookieWebServer
 import com.liaojinxuan.tilivili.data.repository.VideoRepository
+import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import androidx.compose.ui.platform.LocalContext
+import java.net.Inet4Address
+import java.net.NetworkInterface
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -109,7 +114,7 @@ fun TVApp() {
                     0 -> HomeScreen()
                     1 -> Text("这里是搜索页面", color = Color.White, fontSize = 32.sp)
                     2 -> Text("这里是动态页面", color = Color.White, fontSize = 32.sp)
-                    3 -> Text("这里是设置页面", color = Color.White, fontSize = 32.sp)
+                    3 -> SettingsScreen()
                 }
             }
         }
@@ -125,7 +130,7 @@ fun HomeScreen() {
     LaunchedEffect(Unit) {
         isLoading = true
         videos = withContext(Dispatchers.IO) {
-            VideoRepository.getHomeVideos(context) // 👈 传入 context
+            VideoRepository.getHomeVideos(context)
         }
         isLoading = false
     }
@@ -133,7 +138,7 @@ fun HomeScreen() {
     if (isLoading) {
         Text("正在加载首页数据...", color = Color.White, fontSize = 24.sp)
     } else if (videos.isEmpty()) {
-        Text("获取数据失败（可能需要 Wbi 签名或 Cookie）", color = Color.Gray, fontSize = 18.sp)
+        Text("获取数据失败（请先到设置页导入 Cookie）", color = Color.Gray, fontSize = 18.sp)
     } else {
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -154,7 +159,6 @@ fun VideoCard(video: VideoItem) {
             .width(240.dp)
             .padding(8.dp)
     ) {
-        // 封面图
         AsyncImage(
             model = video.pic.replace("http://", "https://"),
             contentDescription = video.title,
@@ -166,7 +170,6 @@ fun VideoCard(video: VideoItem) {
                 .background(Color(0xFF2A2A2A))
         )
         Spacer(modifier = Modifier.height(8.dp))
-        // 标题
         Text(
             text = video.title,
             color = Color.White,
@@ -175,11 +178,61 @@ fun VideoCard(video: VideoItem) {
             overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(4.dp))
-        // UP主
         Text(
             text = video.owner.name,
             color = Color.Gray,
             fontSize = 12.sp
         )
     }
+}
+
+@Composable
+fun SettingsScreen() {
+    val context = LocalContext.current
+    var ipAddress by remember { mutableStateOf("") }
+    val server = remember { CookieWebServer(context.applicationContext, 8080) }
+
+    DisposableEffect(Unit) {
+        ipAddress = getLocalIpAddress()
+        try {
+            server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        onDispose {
+            server.stop()
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("请在手机浏览器中访问以下地址，输入 Cookie：", color = Color.White, fontSize = 24.sp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("http://$ipAddress:8080", color = Color(0xFFFB7299), fontSize = 36.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("请确保手机和电视 **连接在同一 WiFi 下", color = Color.Gray, fontSize = 16.sp)
+    }
+}
+
+// 获取局域网 IP 地址
+fun getLocalIpAddress(): String {
+    try {
+        val en = NetworkInterface.getNetworkInterfaces()
+        while (en.hasMoreElements()) {
+            val intf = en.nextElement()
+            val enumIpAddr = intf.inetAddresses
+            while (enumIpAddr.hasMoreElements()) {
+                val inetAddress = enumIpAddr.nextElement()
+                if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
+                    return inetAddress.hostAddress ?: ""
+                }
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+    return "127.0.0.1"
 }
