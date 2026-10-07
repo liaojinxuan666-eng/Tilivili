@@ -23,7 +23,6 @@ class CookieWebServer(context: Context, port: Int) : NanoHTTPD(port) {
                 return newFixedLengthResponse("Cookie 不能为空！")
             }
         }
-        // 如果没有 POST，就返回一个手机端输入表单
         val html = """
             <html>
             <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
