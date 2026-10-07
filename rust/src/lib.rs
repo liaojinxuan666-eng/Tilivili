@@ -15,7 +15,7 @@ pub extern "system" fn Java_com_liaojinxuan_tilivili_MainActivity_helloRust(
 
 #[no_mangle]
 pub extern "system" fn Java_com_liaojinxuan_tilivili_MainActivity_wbiSign(
-    env: JNIEnv,
+    mut env: JNIEnv, // 👈 就在这里加上 mut
     _class: JClass,
     raw_query: JString,
 ) -> jstring {
