@@ -1,11 +1,8 @@
 package com.liaojinxuan.tilivili.data.repository
 
 import android.content.Context
-import com.liaojinxuan.tilivili.MainActivity
-import com.liaojinxuan.tilivili.data.model.VideoItem
+import com.liaojinxuan.tilivili.data.model.VideoRecommendResponse
 import com.liaojinxuan.tilivili.data.network.RetrofitClient
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 object VideoRepository {
     private var imgKey: String = ""
@@ -25,22 +22,16 @@ object VideoRepository {
         }
     }
 
-    suspend fun getHomeVideos(context: Context): List<VideoItem> {
+    // 注意：这里返回的是完整的响应对象，而不是 List<VideoItem>
+    suspend fun getHomeVideos(context: Context): VideoRecommendResponse {
         return try {
             ensureWbiKeys(context)
-
-            // 热门接口不需要签名，但为了以后扩展（如搜索、评论），我们先在这里练一下签名拼接
-            // 这里直接请求热门接口
-            val response = RetrofitClient.getApi(context).getPopularVideos(ps = 20, pn = 1)
-            
-            if (response.code == 0) {
-                response.data?.item ?: emptyList()
-            } else {
-                emptyList()
-            }
+            // 请求综合热门视频（此接口对无登录状态非常宽容）
+            RetrofitClient.getApi(context).getPopularVideos(ps = 20, pn = 1)
         } catch (e: Exception) {
             e.printStackTrace()
-            emptyList()
+            // 发生异常时返回一个错误码包装的响应
+            VideoRecommendResponse(code = -1, message = e.message ?: "未知错误", data = null)
         }
     }
 }
