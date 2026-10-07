@@ -18,11 +18,18 @@ import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     companion object {
+        // 将加载放在伴生对象中，但用 try-catch 保护，防止闪退
         init {
-            System.loadLibrary("tilivili_rust")
+            try {
+                System.loadLibrary("tilivili_rust")
+            } catch (e: UnsatisfiedLinkError) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -32,15 +39,23 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        val signResult = try {
-            wbiSign("foo=114&bar=514")
-        } catch (e: Exception) {
-            "Rust 签名失败: ${e.message}"
-        }
-
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                TVApp(signResult)
+                // 使用 LaunchedEffect 在协程中异步获取 Rust 签名
+                var rustSign by remember { mutableStateOf("正在计算 Rust 签名...") }
+                
+                LaunchedEffect(Unit) {
+                    rustSign = withContext(Dispatchers.IO) {
+                        try {
+                            // 在 IO 线程里调用 JNI，绝不阻塞主线程
+                            wbiSign("foo=114&bar=514")
+                        } catch (e: Exception) {
+                            "Rust 签名失败: ${e.message}"
+                        }
+                    }
+                }
+                
+                TVApp(rustSign)
             }
         }
     }
@@ -97,7 +112,6 @@ fun TVApp(rustSign: String) {
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // 这里我们统一展示 Rust 返回的签名，验证 JNI 链路
                 Text(
                     text = "Rust Wbi 签名结果:\n\n$rustSign",
                     color = Color.White,
