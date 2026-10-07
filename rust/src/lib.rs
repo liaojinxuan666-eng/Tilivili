@@ -1,7 +1,6 @@
 use jni::objects::{JClass, JString};
 use jni::sys::jstring;
 use jni::JNIEnv;
-use md5::{Digest, Md5};
 
 #[no_mangle]
 pub extern "system" fn Java_com_liaojinxuan_tilivili_MainActivity_helloRust(
@@ -25,11 +24,12 @@ pub extern "system" fn Java_com_liaojinxuan_tilivili_MainActivity_wbiSign(
         .expect("Couldn't get java string!")
         .into();
 
+    // 模拟 Wbi 签名，真实场景中这里的 salt 需要动态获取
     let mixed = format!("{}ea1db124af3c7062474693fa704f4ff8", query);
-    let mut hasher = Md5::new();
-    hasher.update(mixed.as_bytes());
-    let result = hasher.finalize();
-    let sign = hex::encode(result);
+    
+    // md5 0.7.0 的用法：直接 compute，然后用 {:x} 格式化输出十六进制
+    let digest = md5::compute(mixed.as_bytes());
+    let sign = format!("{:x}", digest);
 
     let output = env
         .new_string(sign)
