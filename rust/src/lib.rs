@@ -3,6 +3,15 @@ use jni::sys::jstring;
 use jni::JNIEnv;
 use md5::{Digest, Md5};
 
+// 简单的十六进制转换函数，替代 hex 库
+fn to_hex(bytes: &[u8]) -> String {
+    let mut s = String::new();
+    for &byte in bytes {
+        s.push_str(&format!("{:02x}", byte));
+    }
+    s
+}
+
 #[no_mangle]
 pub extern "system" fn Java_com_liaojinxuan_tilivili_MainActivity_helloRust(
     env: JNIEnv,
@@ -25,12 +34,11 @@ pub extern "system" fn Java_com_liaojinxuan_tilivili_MainActivity_wbiSign(
         .expect("Couldn't get java string!")
         .into();
 
-    // 模拟 Wbi 签名，真实场景中这里的 salt 需要动态获取
     let mixed = format!("{}ea1db124af3c7062474693fa704f4ff8", query);
     let mut hasher = Md5::new();
     hasher.update(mixed.as_bytes());
     let result = hasher.finalize();
-    let sign = hex::encode(result);
+    let sign = to_hex(&result);
 
     let output = env
         .new_string(sign)
