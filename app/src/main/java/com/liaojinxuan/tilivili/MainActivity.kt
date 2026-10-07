@@ -130,19 +130,15 @@ fun HomeScreen() {
 
     LaunchedEffect(Unit) {
         isLoading = true
-        try {
-            val response = withContext(Dispatchers.IO) {
-                VideoRepository.getPopularVideos(context)
-            }
-            // 把接口返回的错误码和消息显示在屏幕上，方便调试
-            if (response.code != 0) {
-                errorMsg = "接口报错: code=${response.code}, msg=${response.message}"
-            } else {
-                videos = response.data?.item ?: emptyList()
-                if (videos.isEmpty()) errorMsg = "暂无数据"
-            }
-        } catch (e: Exception) {
-            errorMsg = "网络异常: ${e.message}"
+        val response = withContext(Dispatchers.IO) {
+            VideoRepository.getHomeVideos(context)
+        }
+        // 处理返回数据
+        if (response.code != 0) {
+            errorMsg = "接口报错: code=${response.code}\nmsg=${response.message}"
+        } else {
+            videos = response.data?.item ?: emptyList()
+            if (videos.isEmpty()) errorMsg = "接口返回数据为空"
         }
         isLoading = false
     }
