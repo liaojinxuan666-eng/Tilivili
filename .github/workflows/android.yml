@@ -23,7 +23,6 @@ jobs:
         with:
           gradle-version: 8.9
 
-      # ===================== 新增 Rust 环境 =====================
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -35,15 +34,18 @@ jobs:
         with:
           ndk-version: r26b
 
+      # 👇 必须要在编译 Rust 之前安装 cargo-ndk
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
       - name: Build Rust Library
         working-directory: ./rust
         env:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
-          rm -f Cargo.lock   # 👈 加上这一行，强迫 Cargo 重新解析依赖
+          rm -f Cargo.lock   # 👈 强制清理旧的依赖缓存，防止版本冲突
           cargo ndk -t arm64-v8a -o ../app/src/main/jniLibs build --release
           cargo ndk -t armeabi-v7a -o ../app/src/main/jniLibs build --release
-      # ========================================================
 
       - name: Build Debug APK
         run: gradle assembleDebug --stacktrace
