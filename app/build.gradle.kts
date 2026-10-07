@@ -76,4 +76,11 @@ dependencies {
 
     // 图片
     implementation(libs.coil.compose)
+    // 扫码登录：获取二维码
+    @GET("x/passport-login/web/qrcode/generate")
+    suspend fun getQrCode(): QrGenerateResponse
+
+    // 扫码登录：轮询扫码状态
+    @GET("x/passport-login/web/qrcode/poll")
+    suspend fun pollQrCode(@Query("qrcode_key") key: String): retrofit2.Response<QrPollResponse>
 }
