@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.tv.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +45,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // 注意：这里的签名已经更新为三个参数，与 Rust 端保持一致
     external fun helloRust(): String
     external fun wbiSign(imgKey: String, subKey: String, rawQuery: String): String
 
@@ -126,22 +126,27 @@ fun HomeScreen() {
     val context = LocalContext.current
     var videos by remember { mutableStateOf<List<VideoItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var errorMsg by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         isLoading = true
-        videos = withContext(Dispatchers.IO) {
-            // 传入 Activity 的 Context，这样我们才能调用 Rust 的 JNI 方法
-            VideoRepository.getHomeVideos(context)
+        try {
+            videos = withContext(Dispatchers.IO) {
+                VideoRepository.getHomeVideos(context)
+            }
+            if (videos.isEmpty()) {
+                errorMsg = "获取数据失败（可能需要 Cookie 或 Wbi 签名）"
+            }
+        } catch (e: Exception) {
+            errorMsg = "请求异常: ${e.message}"
         }
         isLoading = false
     }
-    // ... 后面的 UI 保持不变
-}
 
     if (isLoading) {
         Text("正在加载首页数据...", color = Color.White, fontSize = 24.sp)
-    } else if (videos.isEmpty()) {
-        Text("获取数据失败（请先到设置页导入 Cookie）", color = Color.Gray, fontSize = 18.sp)
+    } else if (errorMsg.isNotEmpty()) {
+        Text(errorMsg, color = Color.Gray, fontSize = 18.sp)
     } else {
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -163,12 +168,12 @@ fun VideoCard(video: VideoItem) {
             .padding(8.dp)
     ) {
         AsyncImage(
-            model = video.pic.replace("http://", "https://"),
+            modelp = video.pic.replace("http://", "https://"),
             contentDescription = video.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(135.dp)
+                .height(135.d)
                 .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFF2A2A2A))
         )
@@ -233,7 +238,7 @@ fun SettingsScreen() {
     }
 }
 
-// 优化后的获取局域网 IP 函数，过滤掉虚拟网卡和 IPv6
+// 获取局域网 IP 地址
 fun getLocalIpAddress(): String {
     try {
         val en = NetworkInterface.getNetworkInterfaces()
@@ -244,7 +249,6 @@ fun getLocalIpAddress(): String {
                 val inetAddress = enumIpAddr.nextElement()
                 if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
                     val ip = inetAddress.hostAddress ?: ""
-                    // 优先返回常见的局域网 IP 段
                     if (ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) {
                         return ip
                     }
