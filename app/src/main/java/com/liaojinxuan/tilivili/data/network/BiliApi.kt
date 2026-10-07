@@ -6,52 +6,32 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 @Serializable
-data class NavResponse(
-    val code: Int,
-    val message: String,
-    val data: NavData?
-)
-
+data class NavResponse(val code: Int, val message: String, val data: NavData?)
 @Serializable
-data class NavData(
-    val wbi_img: WbiImg?
-)
-
+data class NavData(val wbi_img: WbiImg?)
 @Serializable
-data class WbiImg(
-    val img_url: String,
-    val sub_url: String
-)
+data class WbiImg(val img_url: String, val sub_url: String)
 
 @Serializable
 data class QrGenerateResponse(val code: Int, val message: String, val data: QrGenerateData?)
-
 @Serializable
 data class QrGenerateData(val url: String, val qrcode_key: String)
-
 @Serializable
 data class QrPollResponse(val code: Int, val message: String, val data: QrPollData?)
-
 @Serializable
-data class QrPollData(
-    val url: String,
-    val refresh_token: String,
-    val timestamp: Long,
-    val code: Int,
-    val message: String
-)
+data class QrPollData(val url: String, val refresh_token: String, val timestamp: Long, val code: Int, val message: String)
 
 interface BiliApi {
     @GET("x/web-interface/nav")
     suspend fun getNav(): NavResponse
 
-    @GET("x/web-interface/ranking/v2")
-    suspend fun getRankingVideos(
-        @Query("rid") rid: Int = 0,
-        @Query("type") type: String = "all"
+    // 获取综合热门视频，这个接口不需要登录
+    @GET("x/web-interface/popular")
+    suspend fun getPopularVideos(
+        @Query("ps") ps: Int = 20,
+        @Query("pn") pn: Int = 1
     ): VideoRecommendResponse
 
-    // 注意这里：使用了完整的 passport.bilibili.com 域名
     @GET("https://passport.bilibili.com/x/passport-login/web/qrcode/generate")
     suspend fun getQrCode(): QrGenerateResponse
 
