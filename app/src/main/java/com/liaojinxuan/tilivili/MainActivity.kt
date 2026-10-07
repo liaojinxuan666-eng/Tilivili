@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Button
@@ -19,22 +20,37 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        init {
+            System.loadLibrary("tilivili_rust")
+        }
+    }
+
+    external fun helloRust(): String
+    external fun wbiSign(rawQuery: String): String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        val signResult = try {
+            wbiSign("foo=114&bar=514")
+        } catch (e: Exception) {
+            "Rust 签名失败: ${e.message}"
+        }
+
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                TVApp()
+                TVApp(signResult)
             }
         }
     }
 }
 
 @Composable
-fun TVApp() {
+fun TVApp(rustSign: String) {
     var currentTab by remember { mutableStateOf(0) }
     val tabs = listOf("首页", "搜索", "动态", "设置")
 
-    // 使用 Box 替代 Surface，彻底避开 tv-material 的参数兼容性问题
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -76,19 +92,18 @@ fun TVApp() {
             // 右侧内容区
             Box(
                 modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .padding(24.dp),
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val contentText = when (currentTab) {
-                    0 -> "这里是首页内容"
-                    1 -> "这里是搜索页面"
-                    2 -> "这里是动态页面"
-                    3 -> "这里是设置页面"
-                    else -> ""
-                }
-                Text(text = contentText, color = Color.White, fontSize = 32.sp)
+                // 这里我们统一展示 Rust 返回的签名，验证 JNI 链路
+                Text(
+                    text = "Rust Wbi 签名结果:\n\n$rustSign",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
