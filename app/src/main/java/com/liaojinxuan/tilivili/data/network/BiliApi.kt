@@ -4,6 +4,7 @@ import com.liaojinxuan.tilivili.data.model.VideoRecommendResponse
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 @Serializable
 data class NavResponse(val code: Int, val message: String, val data: NavData?)
@@ -25,12 +26,9 @@ interface BiliApi {
     @GET("x/web-interface/nav")
     suspend fun getNav(): NavResponse
 
-    // 获取综合热门视频，这个接口不需要登录
-    @GET("x/web-interface/popular")
-    suspend fun getPopularVideos(
-        @Query("ps") ps: Int = 20,
-        @Query("pn") pn: Int = 1
-    ): VideoRecommendResponse
+    // 改成动态 URL，传入带签名的完整链接
+    @GET
+    suspend fun getSignedPopularVideos(@Url url: String): VideoRecommendResponse
 
     @GET("https://passport.bilibili.com/x/passport-login/web/qrcode/generate")
     suspend fun getQrCode(): QrGenerateResponse
