@@ -1,16 +1,37 @@
 package com.liaojinxuan.tilivili.data.network
 
 import com.liaojinxuan.tilivili.data.model.VideoRecommendResponse
+import kotlinx.serialization.Serializable
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+@Serializable
+data class NavResponse(
+    val code: Int,
+    val message: String,
+    val data: NavData?
+)
+
+@Serializable
+data class NavData(
+    val wbi_img: WbiImg?
+)
+
+@Serializable
+data class WbiImg(
+    val img_url: String,
+    val sub_url: String
+)
+
 interface BiliApi {
-    // 获取首页推荐视频接口（注意：此接口可能需要 Wbi 签名，我们暂时用最简化的匿名接口测试）
-    @GET("x/v2/feed/index")
-    suspend fun getRecommendVideos(
-        @Query("idx") idx: Int = 1,
-        @Query("login_event") loginEvent: Int = 0,
-        @Query("mobi_app") mobiApp: String = "android",
-        @Query("platform") platform: String = "android"
+    // 获取 Wbi 签名所需的 img_key 和 sub_key
+    @GET("x/web-interface/nav")
+    suspend fun getNav(): NavResponse
+
+    // 获取排行榜视频（无需登录，用于测试网络层）
+    @GET("x/web-interface/ranking/v2")
+    suspend fun getRankingVideos(
+        @Query("rid") rid: Int = 0,
+        @Query("type") type: String = "all"
     ): VideoRecommendResponse
 }
