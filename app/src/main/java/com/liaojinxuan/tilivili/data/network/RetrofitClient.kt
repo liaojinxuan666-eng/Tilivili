@@ -16,9 +16,6 @@ object RetrofitClient {
     private const val BASE_URL = "https://app.bilibili.com/"
     private val json = Json { ignoreUnknownKeys = true }
 
-    private var imgKey = ""
-    private var subKey = ""
-
     fun getApi(context: Context): BiliApi {
         val okHttpClient = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -44,6 +41,9 @@ object RetrofitClient {
 
             val requestBuilder = original.newBuilder()
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                // 补充 Passport 接口必需的 Referer 和 Origin
+                .header("Referer", "https://www.bilibili.com/")
+                .header("Origin", "https://www.bilibili.com")
 
             if (cookie.isNotEmpty()) {
                 requestBuilder.header("Cookie", cookie)
