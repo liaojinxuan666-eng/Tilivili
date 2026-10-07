@@ -47,12 +47,12 @@ jobs:
           cargo ndk -t arm64-v8a -o ../app/src/main/jniLibs build --release
           cargo ndk -t armeabi-v7a -o ../app/src/main/jniLibs build --release
 
-      - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace
+      - name: Build Release APK
+        run: gradle assembleRelease --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Tilivili-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: Tilivili-release
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
