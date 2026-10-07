@@ -189,18 +189,29 @@ fun VideoCard(video: VideoItem) {
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
-    var ipAddress by remember { mutableStateOf("") }
+    var ipAddress by remember { mutableStateOf("获取中...") }
+    var serverMsg by remember { mutableStateOf("等待连接...") }
     val server = remember { CookieWebServer(context.applicationContext, 8080) }
 
-    DisposableEffect(Unit) {
-        ipAddress = getLocalIpAddress()
-        try {
-            server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
-        } catch (e: Exception) {
-            e.printStackTrace()
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            ipAddress = getLocalIpAddress()
+            try {
+                server.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
+                serverMsg = "服务器已启动，请访问上述地址"
+            } catch (e: Exception) {
+                serverMsg = "服务器启动失败: ${e.message}"
+            }
         }
+    }
+
+    DisposableEffect(Unit) {
         onDispose {
-            server.stop()
+            try {
+                server.stop()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -212,12 +223,14 @@ fun SettingsScreen() {
         Text("请在手机浏览器中访问以下地址，输入 Cookie：", color = Color.White, fontSize = 24.sp)
         Spacer(modifier = Modifier.height(16.dp))
         Text("http://$ipAddress:8080", color = Color(0xFFFB7299), fontSize = 36.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(serverMsg, color = Color.Gray, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("请确保手机和电视 **连接在同一 WiFi 下", color = Color.Gray, fontSize = 16.sp)
+        Text("请确保手机和电视连接在同一 WiFi 下", color = Color.Gray, fontSize = 16.sp)
     }
 }
 
-// 获取局域网 IP 地址
+// 优化后的获取局域网 IP 函数，过滤掉虚拟网卡和 IPv6
 fun getLocalIpAddress(): String {
     try {
         val en = NetworkInterface.getNetworkInterfaces()
@@ -227,7 +240,11 @@ fun getLocalIpAddress(): String {
             while (enumIpAddr.hasMoreElements()) {
                 val inetAddress = enumIpAddr.nextElement()
                 if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                    return inetAddress.hostAddress ?: ""
+                    val ip = inetAddress.hostAddress ?: ""
+                    // 优先返回常见的局域网 IP 段
+                    if (ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) {
+                        return ip
+                    }
                 }
             }
         }
