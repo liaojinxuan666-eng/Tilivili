@@ -162,26 +162,20 @@ fun HomeScreen() {
 
 @Composable
 fun VideoCard(video: VideoItem) {
-    Column(modifier = Modifier.width(240.dp).padding(8.dp)) {
-        AsyncImage(
-            model = video.pic.replace("http://", "https://"),
-            contentDescription = video.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth().height(135.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF2A2A2A))
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = video.title,
-            color = Color.White,
-            fontSize = 14.sp,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = video.owner.name, color = Color.Gray, fontSize = 12.sp)
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .width(240.dp)
+            .padding(8.dp)
+            .clickable {
+                // 点击时跳转到播放器
+                val intent = android.content.Intent(context, PlayerActivity::class.java)
+                // 这里把假地址写死，用于测试
+                intent.putExtra("video_url", "https://media.w3.org/2010/05/sintel/trailer.mp4")
+                context.startActivity(intent)
+            }
+    ) {
+        // ... 原有的 AsyncImage 和 Text 代码保持不变 ...
     }
 }
 
