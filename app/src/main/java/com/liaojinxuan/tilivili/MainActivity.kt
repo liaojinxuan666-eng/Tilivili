@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -133,7 +134,6 @@ fun HomeScreen() {
         val response = withContext(Dispatchers.IO) {
             VideoRepository.getHomeVideos(context)
         }
-        // 处理返回数据
         if (response.code != 0) {
             errorMsg = "接口报错: code=${response.code}\nmsg=${response.message}"
         } else {
@@ -167,15 +167,32 @@ fun VideoCard(video: VideoItem) {
         modifier = Modifier
             .width(240.dp)
             .padding(8.dp)
-            .clickable {
-                // 点击时跳转到播放器
+            .clickable { // 👈 这里用到了 clickable，所以必须导入
                 val intent = android.content.Intent(context, PlayerActivity::class.java)
-                // 这里把假地址写死，用于测试
                 intent.putExtra("video_url", "https://media.w3.org/2010/05/sintel/trailer.mp4")
                 context.startActivity(intent)
             }
     ) {
-        // ... 原有的 AsyncImage 和 Text 代码保持不变 ...
+        AsyncImage(
+            model = video.pic.replace("http://", "https://"),
+            contentDescription = video.title,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(135.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF2A2A2A))
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = video.title,
+            color = Color.White,
+            fontSize = 14.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(text = video.owner.name, color = Color.Gray, fontSize = 12.sp)
     }
 }
 
