@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- 声明 TV 设备必须支持 Leanback -->
     <uses-feature
         android:name="android.software.leanback"
         android:required="true"
@@ -25,11 +26,7 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:theme, android:label, android:icon, android:allowBackup, android:supportsRtl">
 
-        <!-- 
-          注意：如果你已经删除了 TiliviliApp.kt 文件，
-          请务必把下面这行的 android:name=".TiliviliApp" 删掉！
-          否则安装后打开必闪退。
-        -->
+        <!-- 主界面 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -42,5 +39,13 @@
             </intent-filter>
         </activity>
 
+        <!-- 新增的播放器界面，注意 exported 是 false，因为只有内部应用才能跳转 -->
+        <activity
+            android:name=".PlayerActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode" />
+
     </application>
+
 </manifest>
